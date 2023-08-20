@@ -1,0 +1,19 @@
+os
+path
+fs
+http
+object
+constructor function
+syntactical sugar
+property
+generator function
+method
+class
+version{
+    major
+    minor
+    patch
+}
+
+route
+module wrapper function
