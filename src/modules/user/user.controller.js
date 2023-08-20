@@ -1,3 +1,5 @@
+const { string, object } = require("yup");
+
 const users = [];
 
 function createUser(req, res) {
@@ -5,20 +7,38 @@ function createUser(req, res) {
 
   const email = body.email;
   const name = body.name;
-  
-  if(!email) return res.status(400).send('Email is required.');
-  if(!name) return res.status(400).send('Name is required.');
 
-  const user = users.find((user) => user.email === email);
+  const registrationSchema = object().shape({
+    email: string()
+      .email("This filed should be a valid email address")
+      .required("This field must not be empty"),
+    name: string()
+      .min(2, "This field must be at least 2 characters long")
+      .max(30, "This field must be at most 30 characters long")
+      .required("This field must not be empty"),
+  });
+  const promise = registrationSchema.validate(
+    { email, name },
+    { abortEarly: false }
+  );
 
-  console.log(user);
+  promise
+    .then(function () {
+      const user = users.find((user) => user.email === email);
 
-  // formula 3
+      console.log(user);
 
-  if (user) return res.send("user already exists");
+      // formula 3
 
-  users.push(body);
-  res.status(201).send(body);
+      if (user) return res.send("user already exists");
+
+      users.push(body);
+      res.status(201).send(body);
+    })
+    .catch(function (err) {
+      const errorMsg = { path: err.inner[0].path, msg: err.inner[0].message };
+      return res.status(400).send(errorMsg);
+    });
 
   // formula 2
 
@@ -67,20 +87,16 @@ function getUser(req, res) {
 }
 
 function deleteUser(req, res) {
-    const email = req.params.email;
+  const email = req.params.email;
 
-    const user = users.find((user) => user.email === email);
+  const user = users.find((user) => user.email === email);
 
-    if (!user) return res.send("user not found");
+  if (!user) return res.send("user not found");
 
-    const index = users.findIndex(user => user.email === email);
-    users.splice(index, 1);
+  const index = users.findIndex((user) => user.email === email);
+  users.splice(index, 1);
 
-    res.send(user);
-
-
-
-
+  res.send(user);
 }
 
 module.exports.createUser = createUser;
