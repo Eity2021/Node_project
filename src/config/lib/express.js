@@ -1,4 +1,4 @@
-const userRoutes = require("../../modules/user/user.routes"); // Check this import path
+const userRoutes = require("../../modules/users/user.routes"); // Check this import path
 const express = require("express");
 
 module.exports = function () {

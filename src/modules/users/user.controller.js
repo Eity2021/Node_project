@@ -1,4 +1,10 @@
-const { string, object } = require("yup");
+const validate = require("../core/middleWares/validate");
+const { createUserSchema } = require("./user.schema");
+
+
+validate
+
+validate
 
 const users = [];
 
@@ -6,39 +12,17 @@ function createUser(req, res) {
   const body = req.body;
 
   const email = body.email;
-  const name = body.name;
+  //const name = body.name;
 
-  const registrationSchema = object().shape({
-    email: string()
-      .email("This filed should be a valid email address")
-      .required("This field must not be empty"),
-    name: string()
-      .min(2, "This field must be at least 2 characters long")
-      .max(30, "This field must be at most 30 characters long")
-      .required("This field must not be empty"),
-  });
-  const promise = registrationSchema.validate(
-    { email, name },
-    { abortEarly: false }
-  );
-
-  promise
-    .then(function () {
+ 
       const user = users.find((user) => user.email === email);
-
-      console.log(user);
-
       // formula 3
 
       if (user) return res.send("user already exists");
 
       users.push(body);
       res.status(201).send(body);
-    })
-    .catch(function (err) {
-      const errorMsg = { path: err.inner[0].path, msg: err.inner[0].message };
-      return res.status(400).send(errorMsg);
-    });
+   
 
   // formula 2
 
