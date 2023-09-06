@@ -1,17 +1,19 @@
 const validate = require("../core/middleWares/validate");
 const { createUserSchema } = require("./user.schema");
+const bcrypt = require('bcrypt');
 
+// validate
 
-validate
-
-validate
+// validate
 
 const users = [];
 
 function createUser(req, res) {
-  const body = req.body;
+  const {firstName,lastName,email,password} = req.body;
+  
+  const hashedPassword = bcrypt.hashSync(password,8);
 
-  const email = body.email;
+  //const email = body.email;
   //const name = body.name;
 
  
@@ -20,8 +22,18 @@ function createUser(req, res) {
 
       if (user) return res.send("user already exists");
 
-      users.push(body);
-      res.status(201).send(body);
+       const newUser = {
+          firstName,
+          lastName,
+          email,
+          password : hashedPassword
+       }
+      users.push(newUser);
+      const modifierUser = {...newUser}
+      delete modifierUser.password;
+
+
+      res.status(201).send(modifierUser);
    
 
   // formula 2
@@ -50,19 +62,55 @@ function createUser(req, res) {
   //  }
 }
 
+function login(req,res){
+   
+  const {email, password} = req.body;
+
+  const user = users.find(user => user.email === email);
+  
+  if(!user) return res.status(400).send('Invalid credential')
+
+  
+  const passwordMatch = bcrypt.compareSync(password ,user.password);
+
+  if(!passwordMatch) return res.status(400).send('Invalid credential');
+   
+  const token = bcrypt.hashSync('12345678' ,10);
+
+  user.token = token;
+
+  const modifierUser = {...user , token}
+
+  delete modifierUser.password;
+
+  res.status(200).send(modifierUser);
+}
+
 function getUsers(req, res) {
   res.send(users);
 }
 
 function updateUser(req, res) {
-  const email = req.params.email;
-  const name = req.body.name;
+  // const email = req.params.email;
+  // const name = req.body.name;
 
-  const user = users.find((user) => user.email === email);
+  // const user = users.find((user) => user.email === email);
 
-  if (!user) return res.send("user not found");
+  // if (!user) return res.send("user not found");
 
-  user.name = name;
+  // user.name = name;
+  // res.send(user);
+  const { firstName , lastName , token} = req.body;
+  
+  const user = users.find(user => user.email === req.params.email);
+
+  if (!user) return res.status(404).send("user not found");
+
+  if(token !== user.token) return res.status(401).send('unauthenticated');
+
+  user.firstName = firstName;
+  user.lastName = lastName;
+
   res.send(user);
 }
 
@@ -83,6 +131,7 @@ function deleteUser(req, res) {
   res.send(user);
 }
 
+module.exports.login = login;
 module.exports.createUser = createUser;
 module.exports.getUsers = getUsers;
 module.exports.updateUser = updateUser;
