@@ -1,7 +1,7 @@
 const validate = require("../core/middleWares/validate");
 const { createUserSchema } = require("./user.schema");
-const bcrypt = require('bcrypt');
-
+const bcrypt = require("bcrypt");
+const jwt = require("jsonwebtoken");
 // validate
 
 // validate
@@ -9,32 +9,29 @@ const bcrypt = require('bcrypt');
 const users = [];
 
 function createUser(req, res) {
-  const {firstName,lastName,email,password} = req.body;
-  
-  const hashedPassword = bcrypt.hashSync(password,8);
+  const { firstName, lastName, email, password } = req.body;
+
+  const hashedPassword = bcrypt.hashSync(password, 8);
 
   //const email = body.email;
   //const name = body.name;
 
- 
-      const user = users.find((user) => user.email === email);
-      // formula 3
+  const user = users.find((user) => user.email === email);
+  // formula 3
 
-      if (user) return res.send("user already exists");
+  if (user) return res.send("user already exists");
 
-       const newUser = {
-          firstName,
-          lastName,
-          email,
-          password : hashedPassword
-       }
-      users.push(newUser);
-      const modifierUser = {...newUser}
-      delete modifierUser.password;
+  const newUser = {
+    firstName,
+    lastName,
+    email,
+    password: hashedPassword,
+  };
+  users.push(newUser);
+  const modifierUser = { ...newUser };
+  delete modifierUser.password;
 
-
-      res.status(201).send(modifierUser);
-   
+  res.status(201).send(modifierUser);
 
   // formula 2
 
@@ -62,26 +59,30 @@ function createUser(req, res) {
   //  }
 }
 
-function login(req,res){
-   
-  const {email, password} = req.body;
+function login(req, res) {
+  const { email, password } = req.body;
 
-  const user = users.find(user => user.email === email);
-  
-  if(!user) return res.status(400).send('Invalid credential')
+  const user = users.find((user) => user.email === email);
 
-  
-  const passwordMatch = bcrypt.compareSync(password ,user.password);
+  if (!user) return res.status(400).send("Invalid credential");
 
-  if(!passwordMatch) return res.status(400).send('Invalid credential');
-   
-  const token = bcrypt.hashSync('12345678' ,10);
+  const passwordMatch = bcrypt.compareSync(password, user.password);
 
-  user.token = token;
+  if (!passwordMatch) return res.status(400).send("Invalid credential");
 
-  const modifierUser = {...user , token}
-
+  const token = jwt.sign(
+    { email: user.email, firstName: user.firstName, lastName: user.lastName },
+    process.env.TOKEN_SECRET,
+    { expiresIn: "1h", issuer: user.email }
+  );   
+    console.log("login method :" , token)
+  const modifierUser = { ...user };
   delete modifierUser.password;
+
+  res.cookie("access_token", token, {
+    httpOnly: true,
+
+  });
 
   res.status(200).send(modifierUser);
 }
@@ -100,13 +101,11 @@ function updateUser(req, res) {
 
   // user.name = name;
   // res.send(user);
-  const { firstName , lastName , token} = req.body;
-  
-  const user = users.find(user => user.email === req.params.email);
+  const { firstName, lastName } = req.body;
+
+  const user = users.find((user) => user.email === req.params.email);
 
   if (!user) return res.status(404).send("user not found");
-
-  if(token !== user.token) return res.status(401).send('unauthenticated');
 
   user.firstName = firstName;
   user.lastName = lastName;
@@ -131,9 +130,14 @@ function deleteUser(req, res) {
   res.send(user);
 }
 
+function findUser(email) {
+  const user = users.find((user) => user.email === email);
+  return user;
+}
 module.exports.login = login;
 module.exports.createUser = createUser;
 module.exports.getUsers = getUsers;
 module.exports.updateUser = updateUser;
 module.exports.getUser = getUser;
 module.exports.deleteUser = deleteUser;
+module.exports.findUser = findUser;
