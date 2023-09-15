@@ -75,7 +75,7 @@ function login(req, res) {
     process.env.TOKEN_SECRET,
     { expiresIn: "1h", issuer: user.email }
   );   
-    console.log("login method :" , token)
+   //console.log("login method :" , token)
   const modifierUser = { ...user };
   delete modifierUser.password;
 

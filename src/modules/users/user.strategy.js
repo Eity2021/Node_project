@@ -7,9 +7,9 @@ module.exports = function () {
     let token = null;
     if (req && req.signedCookies) {
       console.log(req.headers);
-      token = req.headers.authorization.split(" ")[1];
+      token = req.headers.authorization.split("  ")[1];
     }
-    console.log("token: ", token)
+    console.log("token:", token)
     return token;
   }
   passport.use(
@@ -18,7 +18,7 @@ module.exports = function () {
         secretOrKey:process.env.TOKEN_SECRET,
         jwtFromRequest:cookieExtractor
       }, 
-    function(payload, done){
+    function(payload,done){
       console.log("strategy :" , payload);
 
      const user = findUser(payload.email);
@@ -27,3 +27,5 @@ module.exports = function () {
   }))
 
 };
+
+

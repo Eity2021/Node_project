@@ -7,7 +7,7 @@ function authenticate(req, res, next) {
   console.log(token)
 
   if (req && req.signedCookies) {
-    console.log(req.headers);
+    // console.log(req.headers);
     token = req.headers.authorization.split(" ")[1];
 
     if (!token) return res.status(401).send("Authentication Failed");
