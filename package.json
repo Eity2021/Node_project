@@ -10,6 +10,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "async": "^3.2.4",
     "bcrypt": "^5.1.1",
     "cookie-parser": "^1.4.6",
     "dotenv": "^16.3.1",
@@ -18,9 +19,11 @@
     "jsonwebtoken": "^9.0.2",
     "lodash": "^4.17.21",
     "middleware": "^1.0.0",
+    "mysql2": "^3.6.1",
     "nodemon": "^3.0.1",
     "passport": "^0.6.0",
     "passport-jwt": "^4.0.1",
+    "sequelize": "^6.33.0",
     "yup": "^1.2.0"
   }
 }

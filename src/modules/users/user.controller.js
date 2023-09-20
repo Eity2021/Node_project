@@ -2,36 +2,75 @@ const validate = require("../core/middleWares/validate");
 const { createUserSchema } = require("./user.schema");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
+const User = require("./user.modal");
 // validate
 
 // validate
 
 const users = [];
 
-function createUser(req, res) {
+async function createUser(req, res) {
+     
+try{
   const { firstName, lastName, email, password } = req.body;
 
-  const hashedPassword = bcrypt.hashSync(password, 8);
+  //const hashedPassword = bcrypt.hashSync(password, 8);
 
   //const email = body.email;
   //const name = body.name;
 
-  const user = users.find((user) => user.email === email);
+  const existUser = await User.findOne({
+    where:{email},
+  });
+  
+  // .then(async (existUser) => {
+    if(existUser) return res.status(400).send("Already registered");
+    
+   const user = await  User.create({
+      firstName,
+      lastName,
+      email,
+      password,
+    });
+    res.status(201).send(user);
+}catch(err){
+  console.log(err);
+  res.status(500).send("internal server error")
+}
+    // .then((user) => {
+    //   res.status(201).send(user);
+    // })
+    // .catch((err) => {
+    //   console.log(err);
+    //   res.status(500).send("internal server error")
+    // });
+  
+  // }).catch((err) => {
+  //   console.log(err);
+  //   res.status(500).send("internal server error")
+  // })
+  // const user = users.find((user) => user.email === email);
   // formula 3
 
-  if (user) return res.send("user already exists");
+  //if (user) return res.send("user already exists");
 
-  const newUser = {
-    firstName,
-    lastName,
-    email,
-    password: hashedPassword,
-  };
-  users.push(newUser);
-  const modifierUser = { ...newUser };
-  delete modifierUser.password;
+  // const newUser = {
+  //   firstName,
+  //   lastName,
+  //   email,
+  //   password: hashedPassword,
+  // };
 
-  res.status(201).send(modifierUser);
+
+  //users.push(newUser);
+
+
+
+
+  // const modifierUser = { ...newUser };
+  // delete modifierUser.password;
+
+ 
 
   // formula 2
 
@@ -56,39 +95,64 @@ function createUser(req, res) {
   //  }
   //  else {
   //   res.send("user already exit")
-  //  }
+  //  }}
+
+  
+  
 }
 
-function login(req, res) {
-  const { email, password } = req.body;
+async function login(req, res) {
 
-  const user = users.find((user) => user.email === email);
+  try{
+    const { email, password } = req.body;
+    const user = await User.findOne({
+      where:{email},
+     // attributes:{exclude : ["password"],}
+    });
+    
+    // .then(async (existUser) => {
+      if(!user || !user.password || !user.validPassword(password)) return res.status(400).send("invalid Credentials");
+      
+      const token = jwt.sign(
 
-  if (!user) return res.status(400).send("Invalid credential");
+        { 
+          id:user.id, 
+          email: user.email,
+           firstName: user.firstName, 
+           lastName: user.lastName },
+        process.env.TOKEN_SECRET,
+        { expiresIn: "1h", issuer: user.email }
+      );   
 
-  const passwordMatch = bcrypt.compareSync(password, user.password);
+    
+      res.cookie("access_token", token, {
+        httpOnly: true,
+    
+      });
+    
+      res.status(200).send(user);
 
-  if (!passwordMatch) return res.status(400).send("Invalid credential");
+      //res.status(201).send(user);
+  }catch(err){
+    console.log(err);
+    res.status(500).send("internal server error")
+  }
 
-  const token = jwt.sign(
-    { email: user.email, firstName: user.firstName, lastName: user.lastName },
-    process.env.TOKEN_SECRET,
-    { expiresIn: "1h", issuer: user.email }
-  );   
-   //console.log("login method :" , token)
-  const modifierUser = { ...user };
-  delete modifierUser.password;
 
-  res.cookie("access_token", token, {
-    httpOnly: true,
-
-  });
-
-  res.status(200).send(modifierUser);
+ 
 }
 
-function getUsers(req, res) {
-  res.send(users);
+async function getUsers(req, res) {
+  try{
+  
+     const users = await  User.findAll({
+      attributes:{exclude:["password"]}
+     });
+      res.status(201).send(users);
+  }catch(err){
+    console.log(err);
+    res.status(500).send("internal server error")
+  }
 }
 
 function updateUser(req, res) {
