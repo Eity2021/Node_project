@@ -3,9 +3,9 @@ const { createUserSchema } = require("./user.schema");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const User = require("./user.modal");
-// validate
 
-// validate
+
+
 
 const users = [];
 
@@ -155,7 +155,34 @@ async function getUsers(req, res) {
   }
 }
 
-function updateUser(req, res) {
+async function getUser(req, res) {
+
+  try{
+    const userId = req.params.id;
+    const user = await User.findOne({
+        where: { id: userId },
+        attributes: { exclude: ["password"]},
+    });
+    //res.status(201).send(user);
+
+    if (!user) {
+      // User not found, return a 404 status code and a meaningful message.
+      res.status(404).send("User not found");
+    } else {
+      // User found, return a 200 status code and the user data.
+      res.status(201).send(user);
+    }
+  }catch(err){
+    console.log(err);
+    res.status(500).send("Internal Server Error")
+  }
+
+  //if (!user) return res.status(404).send("User not found");
+
+  // res.send(user);
+}
+
+async function updateUser(req, res) {
   // const email = req.params.email;
   // const name = req.body.name;
 
@@ -165,21 +192,48 @@ function updateUser(req, res) {
 
   // user.name = name;
   // res.send(user);
-  const { firstName, lastName } = req.body;
+  // const { firstName, lastName } = req.body;
 
-  const user = users.find((user) => user.email === req.params.email);
+  // const user = users.find((user) => user.email === req.params.email);
 
-  if (!user) return res.status(404).send("user not found");
+  // if (!user) return res.status(404).send("user not found");
 
-  user.firstName = firstName;
-  user.lastName = lastName;
+  // user.firstName = firstName;
+  // user.lastName = lastName;
 
-  res.send(user);
+  // res.send(user);
+  try {
+    const { firstName, lastName } = req.body;
+    const email = req.user.email;
+
+    const user = await User.findOne({
+        where: { email },
+    });
+
+    if (!user) return res.status(404).send("User not found");
+
+    await User.update(
+        {
+            firstName,
+            lastName,
+        },
+        { where: { email } }
+    );
+
+    const updatedUser = await User.findOne({
+        where: { email },
+        //attributes: { exclude: ["password"] },
+    });
+
+    res.status(200).send(updatedUser);
+} catch (err) {
+    console.log(err);
+    res.status(500).send("Internal server error");
+}
 }
 
-function getUser(req, res) {
-  res.send(users);
-}
+
+
 
 function deleteUser(req, res) {
   const email = req.params.email;

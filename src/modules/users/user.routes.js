@@ -15,9 +15,10 @@ module.exports = (app) => {
   .get(getUsers)
   .patch(AuthStrategy ,validate(UserUpdateSchema),updateUser);
 
-  app.route("/users/:id")
+  
+  app.route("/user/:id")
   .get(getUser)
-  .delete(deleteUser);
+  .delete(deleteUser)
 
   app.post("/users/login" , login);
 

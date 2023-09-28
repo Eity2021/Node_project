@@ -1,4 +1,3 @@
-const jwt = require("jsonwebtoken");
 const passport = require("passport");
 
 function AuthStrategy(req, res, next) {

@@ -1,7 +1,6 @@
 const passport  = require("passport");
 const { Strategy } = require("passport-jwt");
-const { findUser } = require("./user.controller");
-
+const User = require("./user.modal");
 module.exports = function () {
   function cookieExtractor(req) {
     let token = null;
@@ -13,18 +12,27 @@ module.exports = function () {
     return token;
   }
   passport.use(
-    "user-jwt", new Strategy(
-      {
-        secretOrKey:process.env.TOKEN_SECRET,
-        jwtFromRequest:cookieExtractor
-      }, 
-    function(payload,done){
-      console.log("strategy :" , payload);
+    "user-jwt",
+    new Strategy(
+        {
+            secretOrKey: process.env.TOKEN_SECRET,
+            jwtFromRequest: cookieExtractor,
+        },
+        function (payload, done) {
+            User.findOne({
+                where: {
+                    id: payload.id,
+                },
+            }).then((user) => {
+                if (user) {
+                    return done(null, user);
+                }
 
-     const user = findUser(payload.email);
-     if(!user) return done(null,false)
-     done(null,user);
-  }))
+                return done(null, false);
+            });
+        }
+    )
+        );
 
 };
 
